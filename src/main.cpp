@@ -13,13 +13,13 @@ static BLEAddress* p_server_address;
 static boolean do_connect = false;
 
 BLEScan* p_ble_scan;
-hw_timer_t* timer = NULL;
-portMUX_TYPE timer_mux = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
-void IRAM_ATTR on_timer() { p_ble_scan->stop(); }
+void _show_logs();
+
 void write_sd_card(time_t time) {
   File file = SD.open("/log.csv", FILE_APPEND);
-  file.printf("%d\n", time);
+  file.printf("%ld\n", time);
   file.close();
 }
 
@@ -40,11 +40,11 @@ void setup() {
   SPI.begin();
   SD.begin();
 
+  // pinMode(BUTTON_B_PIN, INPUT);
   sqlite3_initialize();
   create_table();
-  M5.Lcd.setTextSize(3);
 
-  attachInterrupt(digitalPinToInterrupt(BUTTON_A), show_logs, CHANGE);
+  // attachInterrupt(BUTTON_B_PIN, _show_logs, CHANGE);
 
   BLEDevice::init("");
 
@@ -52,7 +52,9 @@ void setup() {
   p_ble_scan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
   p_ble_scan->setActiveScan(false);
 }
-void task_ble() {
+void loop() {
+  M5.update();
+
   BLEScanResults foundDevices = p_ble_scan->start(1);  // スキャンする
   int count = foundDevices.getCount();
   for (int i = 0; i < count; i++) {
@@ -77,6 +79,11 @@ void task_ble() {
     M5.Lcd.setCursor(0, 0);
     M5.Lcd.printf("seq: %d\r\n", seq);
     M5.Lcd.printf("tm: %d:%d:%d'\r\n", now->tm_hour, now->tm_min, now->tm_sec);
-    insert_db(time);
+    insert_db(time, seq);
+  }
+  if (M5.BtnB.wasPressed()) {
+    show_logs();
   }
 }
+
+void IRAM_ATTR _show_logs() { show_logs(); }
