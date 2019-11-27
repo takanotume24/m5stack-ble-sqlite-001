@@ -39,11 +39,11 @@ void setup() {
   M5.begin();
   SPI.begin();
   SD.begin();
+  M5.Lcd.setTextSize(2);
 
   // pinMode(BUTTON_B_PIN, INPUT);
   sqlite3_initialize();
   create_table();
-
   // attachInterrupt(BUTTON_B_PIN, _show_logs, CHANGE);
 
   BLEDevice::init("");

@@ -130,7 +130,7 @@ void show_logs() {
     struct tm *show_tm = localtime(&time);
     char str_time[128] = {0};
     strftime(str_time, sizeof(str_time), "%Y/%m/%d %H:%M:%S", show_tm);
-    M5.Lcd.printf("id:%02d seq:%02d time:%s\n", id, seq, str_time);
+    M5.Lcd.printf("%03d | %s\n", seq, str_time);
   }
 
   if (error != SQLITE_DONE) {
