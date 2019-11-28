@@ -55,6 +55,7 @@ int db_exec(sqlite3 *db, const char *sql) {
     sqlite3_free(zErrMsg);
   } else {
     M5.Lcd.printf("Operation done successfully\n");
+    M5.Lcd.printf(zErrMsg);
   }
   M5.Lcd.print(F("Time taken:"));
   M5.Lcd.println(micros() - start);
@@ -85,14 +86,14 @@ int insert_db(time_t time, int seq) {
   sqlite3_stmt *statement = NULL;
 
   char *msg_error = NULL;
+  char *querry = "INSERT INTO LOGS(seq,time) VALUES(:seq,:time);";
   int error = 0;
   sqlite3 *db_sd;
   open_db(FILE_NAME_DB, &db_sd);
 
-  sqlite3_prepare_v2(db_sd, "INSERT INTO LOGS(seq,time) VALUES(:seq,:time);",
-                     128, &statement, NULL);
+  sqlite3_prepare_v2(db_sd, querry, 128, &statement, NULL);
   if (error != SQLITE_OK) {
-    M5.Lcd.printf("faild insert.\n");
+    M5.Lcd.printf("faild insert. >_<\n");
     return error;
   }
   sqlite3_bind_int64(statement,
@@ -115,7 +116,8 @@ void show_logs() {
   int error = 0;
   sqlite3 *db_sd;
   const char *querry =
-      "SELECT id,seq,time FROM LOGS order by id DESC limit 10;";
+      "SELECT id,seq,time "
+      "FROM LOGS order by id DESC limit 10;";
   open_db(FILE_NAME_DB, &db_sd);
   error = sqlite3_prepare_v2(db_sd, querry, 64, &statement, NULL);
 

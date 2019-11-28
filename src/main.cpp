@@ -1,10 +1,12 @@
 
 #include <M5Stack.h>
+#include "../lib/M5Servo.h"
 #include "BLEDevice.h"
 #include "sqlite.h"
 uint8_t seq;                     // remember number of boots in RTC Memory
 #define MyManufacturerId 0xffff  // test manufacturer ID
 #define S_PERIOD 1               // Silent period
+#define PIN_SERVO 5
 
 static BLEUUID service_uuid("");
 static BLEUUID char_uuid("");
@@ -16,6 +18,9 @@ BLEScan* p_ble_scan;
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 void _show_logs();
+void rotate_servo();
+
+enum KeyState { OPEN, CLOSE };
 
 void write_sd_card(time_t time) {
   File file = SD.open("/log.csv", FILE_APPEND);
@@ -80,6 +85,7 @@ void loop() {
     M5.Lcd.printf("seq: %d\r\n", seq);
     M5.Lcd.printf("tm: %d:%d:%d'\r\n", now->tm_hour, now->tm_min, now->tm_sec);
     insert_db(time, seq);
+    rotate_servo();
   }
   if (M5.BtnB.wasPressed()) {
     show_logs();
@@ -87,3 +93,21 @@ void loop() {
 }
 
 void IRAM_ATTR _show_logs() { show_logs(); }
+
+void rotate_servo() {
+  M5Servo servo;
+  servo.attach(PIN_SERVO);
+
+  static enum KeyState key_state = OPEN;
+
+  switch (key_state) {
+    case OPEN:
+      servo.write(0);
+      key_state = CLOSE;
+      break;
+    case CLOSE:
+      servo.write(90);
+      key_state = OPEN;
+      break;
+  }
+}
