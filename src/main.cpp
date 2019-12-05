@@ -83,7 +83,9 @@ void loop() {
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0, 0);
     M5.Lcd.printf("seq: %d\r\n", seq);
-    M5.Lcd.printf("tm: %d:%d:%d'\r\n", now->tm_hour, now->tm_min, now->tm_sec);
+    M5.Lcd.printf("tm: %d/%d/%d %d:%d:%d'\r\n", now->tm_year + 1900,
+                  now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min,
+                  now->tm_sec);
     insert_db(time, seq);
     rotate_servo();
   }
