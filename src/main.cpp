@@ -22,12 +22,6 @@ void rotate_servo();
 
 enum KeyState { OPEN, CLOSE };
 
-void write_sd_card(time_t time) {
-  File file = SD.open("/log.csv", FILE_APPEND);
-  file.printf("%ld\n", time);
-  file.close();
-}
-
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertised_device) {
     if (!advertised_device.haveServiceUUID()) return;
@@ -83,6 +77,7 @@ void loop() {
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0, 0);
     M5.Lcd.printf("seq: %d\r\n", seq);
+    M5.Lcd.printf("time_t : %ld\n", time);
     M5.Lcd.printf("tm: %d/%d/%d %d:%d:%d'\r\n", now->tm_year + 1900,
                   now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min,
                   now->tm_sec);

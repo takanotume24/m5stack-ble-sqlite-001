@@ -37,10 +37,10 @@ static int callback(void *data, int argc, char **argv, char **azColName) {
 int open_db(const char *filename, sqlite3 **db) {
   int rc = sqlite3_open(filename, db);
   if (rc) {
-    M5.Lcd.printf("Can't open database: %s\n", sqlite3_errmsg(*db));
+    M5.Lcd.printf("Can't open database: %s (>_<)\n", sqlite3_errmsg(*db));
     return rc;
   } else {
-    M5.Lcd.printf("Opened database successfully\n");
+    M5.Lcd.printf("Opened database successfully (^_^)\n");
   }
   return rc;
 }
@@ -54,7 +54,7 @@ int db_exec(sqlite3 *db, const char *sql) {
     M5.Lcd.printf("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    M5.Lcd.printf("Operation done successfully\n");
+    M5.Lcd.printf("Operation done successfully (^_^)\n");
     M5.Lcd.printf(zErrMsg);
   }
   M5.Lcd.print(F("Time taken:"));
@@ -77,7 +77,7 @@ int create_table() {
 
     return err;
   }
-  M5.Lcd.printf("create table success\n");
+  M5.Lcd.printf("create table success (^_^)\n");
   sqlite3_close(db_sd);
   return err;
 }
@@ -110,6 +110,8 @@ int insert_db(time_t time, int seq) {
 }
 
 void show_logs() {
+  M5.Lcd.fillScreen(TFT_BLACK);
+  M5.Lcd.setCursor(0, 0);
   sqlite3_stmt *statement = NULL;
 
   char *msg_error = NULL;
@@ -122,7 +124,7 @@ void show_logs() {
   error = sqlite3_prepare_v2(db_sd, querry, 64, &statement, NULL);
 
   if (error != SQLITE_OK) {
-    M5.Lcd.printf("select failed >_<\n");
+    M5.Lcd.printf("select failed (>_<)\n");
   }
 
   while (SQLITE_ROW == (error = sqlite3_step(statement))) {
@@ -136,8 +138,7 @@ void show_logs() {
   }
 
   if (error != SQLITE_DONE) {
-    M5.Lcd.printf("select not done >_<\n");
+    M5.Lcd.printf("select not done (>_<)\n");
   }
-  sqlite3_finalize(statement);
   sqlite3_close(db_sd);
 }
