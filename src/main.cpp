@@ -8,6 +8,8 @@ uint8_t seq;                     // remember number of boots in RTC Memory
 #define S_PERIOD 1               // Silent period
 #define PIN_SERVO 5
 
+#define PIN_ROTATE_SENSOR 35
+
 static BLEUUID service_uuid("");
 static BLEUUID char_uuid("");
 
@@ -73,15 +75,23 @@ void loop() {
     seq = data[2];
     time_t time =
         (time_t)(data[6] << 24 | data[5] << 16 | data[4] << 8 | data[3]);
+    uint8_t str_len = data[7];
+    
+    std::string user_name;
+    for(int i = 0; i < str_len; i++){
+        user_name += data[i + 8];
+    }
+
     struct tm* now = localtime(&time);
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0, 0);
+    M5.Lcd.printf("name: %s\r\n", user_name.c_str());
     M5.Lcd.printf("seq: %d\r\n", seq);
     M5.Lcd.printf("time_t : %ld\n", time);
     M5.Lcd.printf("tm: %d/%d/%d %d:%d:%d'\r\n", now->tm_year + 1900,
                   now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min,
                   now->tm_sec);
-    insert_db(time, seq);
+    insert_db(user_name, time, seq);
     rotate_servo();
   }
   if (M5.BtnB.wasPressed()) {
@@ -95,16 +105,30 @@ void rotate_servo() {
   M5Servo servo;
   servo.attach(PIN_SERVO);
 
-  static enum KeyState key_state = OPEN;
+  static enum KeyState key_state;
+  uint16_t rotate_sensor = analogRead(PIN_ROTATE_SENSOR);
+
+  M5.Lcd.setCursor(0, 200);
+
+  if (rotate_sensor > 1024 / 2) {
+    key_state = OPEN;
+    M5.Lcd.printf("OPEN -> ");
+  } else {
+    key_state = CLOSE;
+    M5.Lcd.printf("CLOSE -> ");
+  }
 
   switch (key_state) {
     case OPEN:
       servo.write(0);
       key_state = CLOSE;
+      M5.Lcd.printf("CLOSE");
       break;
     case CLOSE:
       servo.write(90);
       key_state = OPEN;
+      M5.Lcd.printf("OPEN");
+
       break;
   }
 }

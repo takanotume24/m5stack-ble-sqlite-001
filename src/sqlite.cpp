@@ -21,7 +21,7 @@
 #include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
-const char *FILE_NAME_DB = "/sd/test3.db";
+const char *FILE_NAME_DB = "/sd/test_with_user_name_name.db";
 
 const char *data = "Callback function called";
 static int callback(void *data, int argc, char **argv, char **azColName) {
@@ -69,6 +69,7 @@ int create_table() {
   char *querry =
       "CREATE TABLE IF NOT EXISTS LOGS"
       "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+      "user_name TEXT,"
       "seq INTEGER, "
       "time datetime NOT NULL);";
   int err = sqlite3_exec(db_sd, querry, NULL, NULL, &msg_err);
@@ -82,11 +83,12 @@ int create_table() {
   return err;
 }
 
-int insert_db(time_t time, int seq) {
+int insert_db(std::string user_name, time_t time, int seq) {
   sqlite3_stmt *statement = NULL;
 
   char *msg_error = NULL;
-  char *querry = "INSERT INTO LOGS(seq,time) VALUES(:seq,:time);";
+  char *querry =
+      "INSERT INTO LOGS(user_name,seq,time) VALUES(:user_name, :seq, :time);";
   int error = 0;
   sqlite3 *db_sd;
   open_db(FILE_NAME_DB, &db_sd);
@@ -96,6 +98,9 @@ int insert_db(time_t time, int seq) {
     M5.Lcd.printf("faild insert. >_<\n");
     return error;
   }
+  sqlite3_bind_text(statement,
+                    sqlite3_bind_parameter_index(statement, ":user_name"),
+                    user_name.c_str(), user_name.length(), SQLITE_TRANSIENT);
   sqlite3_bind_int64(statement,
                      sqlite3_bind_parameter_index(statement, ":time"), time);
   sqlite3_bind_int64(statement, sqlite3_bind_parameter_index(statement, ":seq"),
@@ -118,7 +123,7 @@ void show_logs() {
   int error = 0;
   sqlite3 *db_sd;
   const char *querry =
-      "SELECT id,seq,time "
+      "SELECT id,user_name,seq,time "
       "FROM LOGS order by id DESC limit 10;";
   open_db(FILE_NAME_DB, &db_sd);
   error = sqlite3_prepare_v2(db_sd, querry, 64, &statement, NULL);
@@ -129,12 +134,13 @@ void show_logs() {
 
   while (SQLITE_ROW == (error = sqlite3_step(statement))) {
     int id = sqlite3_column_int(statement, 0);
-    int seq = sqlite3_column_int(statement, 1);
-    time_t time = sqlite3_column_int(statement, 2);
+    std::string user_name = (const char *)sqlite3_column_text(statement, 1);
+    int seq = sqlite3_column_int(statement, 2);
+    time_t time = sqlite3_column_int(statement, 3);
     struct tm *show_tm = localtime(&time);
     char str_time[128] = {0};
     strftime(str_time, sizeof(str_time), "%Y/%m/%d %H:%M:%S", show_tm);
-    M5.Lcd.printf("%03d | %s\n", seq, str_time);
+    M5.Lcd.printf("%s | %s\n", user_name.c_str(), str_time);
   }
 
   if (error != SQLITE_DONE) {
