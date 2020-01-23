@@ -1,5 +1,6 @@
 
 #include <M5Stack.h>
+#include <unordered_map> 
 #include "../lib/M5Servo.h"
 #include "BLEDevice.h"
 #include "sqlite.h"
@@ -16,6 +17,7 @@ static BLEUUID char_uuid("");
 static BLEAddress* p_server_address;
 static boolean do_connect = false;
 
+std::unordered_map<std::string, uint8_t> child_state;
 BLEScan* p_ble_scan;
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
@@ -67,25 +69,27 @@ void loop() {
     std::string data = d.getManufacturerData();
     int manu = data[1] << 8 | data[0];
 
-    if (manu != MyManufacturerId ||
-        seq == data[2]) {  // カンパニーIDが0xFFFFで、
+    if (manu != MyManufacturerId ) {  // カンパニーIDが0xFFFFで、
       continue;
     }  // シーケンス番号が新しいものを探す
-
     seq = data[2];
     time_t time =
         (time_t)(data[6] << 24 | data[5] << 16 | data[4] << 8 | data[3]);
     uint8_t str_len = data[7];
-    
+
     std::string user_name;
-    for(int i = 0; i < str_len; i++){
-        user_name += data[i + 8];
+    for (int i = 0; i < str_len; i++) {
+      user_name += data[i + 8];
     }
+
+    if(child_state[user_name] == seq){ continue;}
+
+    child_state[user_name] = seq;
 
     struct tm* now = localtime(&time);
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0, 0);
-    M5.Lcd.printf("name: %s\r\n", user_name.c_str());
+    M5.Lcd.printf("len: %d,name: %s\r\n", str_len, user_name.c_str());
     M5.Lcd.printf("seq: %d\r\n", seq);
     M5.Lcd.printf("time_t : %ld\n", time);
     M5.Lcd.printf("tm: %d/%d/%d %d:%d:%d'\r\n", now->tm_year + 1900,
@@ -96,6 +100,10 @@ void loop() {
   }
   if (M5.BtnB.wasPressed()) {
     show_logs();
+  }
+  if (M5.BtnC.wasPressed()){
+    drop_table();
+    create_table();
   }
 }
 
