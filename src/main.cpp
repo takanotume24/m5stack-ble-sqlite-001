@@ -6,13 +6,13 @@
 #include "sqlite.h"
 uint8_t seq;                     // remember number of boots in RTC Memory
 #define MyManufacturerId 0xffff  // test manufacturer ID
+
 #define S_PERIOD 1               // Silent period
 #define PIN_SERVO 5
-
 #define PIN_ROTATE_SENSOR 35
 
-static BLEUUID service_uuid("");
-static BLEUUID char_uuid("");
+static BLEUUID service_uuid("0xff");
+static BLEUUID char_uuid("0xff");
 
 static BLEAddress* p_server_address;
 static boolean do_connect = false;
@@ -67,24 +67,24 @@ void loop() {
     }
 
     std::string data = d.getManufacturerData();
-    int manu = data[1] << 8 | data[0];
+    int manu = data.at(1) << 8 | data.at(0);
 
     if (manu != MyManufacturerId ) {  // カンパニーIDが0xFFFFで、
       continue;
     }  // シーケンス番号が新しいものを探す
-    seq = data[2];
+    seq = data.at(2);
     time_t time =
-        (time_t)(data[6] << 24 | data[5] << 16 | data[4] << 8 | data[3]);
-    uint8_t str_len = data[7];
+        (time_t)(data.at(6) << 24 | data.at(5) << 16 | data.at(4) << 8 | data.at(3));
+    uint8_t str_len = data.at(7);
 
     std::string user_name;
     for (int i = 0; i < str_len; i++) {
-      user_name += data[i + 8];
+      user_name += data.at(i + 8);
     }
 
-    if(child_state[user_name] == seq){ continue;}
+    if(child_state.at(user_name) == seq){ continue;}
 
-    child_state[user_name] = seq;
+    child_state.at(user_name) = seq;
 
     struct tm* now = localtime(&time);
     M5.Lcd.fillScreen(BLACK);
