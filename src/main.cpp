@@ -4,12 +4,11 @@
 #include "../lib/M5Servo.h"
 #include "BLEDevice.h"
 #include "sqlite.h"
-uint8_t seq;                     // remember number of boots in RTC Memory
-#define MyManufacturerId 0xffff  // test manufacturer ID
-#define S_PERIOD 1               // Silent period
-#define PIN_SERVO 5
 
-#define PIN_ROTATE_SENSOR 35
+uint8_t seq;                     // remember number of boots in RTC Memory
+const uint32_t MyManufacturerId = 0xffff;
+const gpio_num_t PIN_SERVO = gpio_num_t::GPIO_NUM_5;
+const gpio_num_t PIN_ROTATE_SENSOR = gpio_num_t::GPIO_NUM_35;
 
 static BLEUUID service_uuid("");
 static BLEUUID char_uuid("");
