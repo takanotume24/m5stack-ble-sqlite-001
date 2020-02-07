@@ -59,6 +59,7 @@ void loop() {
 
   BLEScanResults foundDevices = p_ble_scan->start(1);  // スキャンする
   int count = foundDevices.getCount();
+
   for (int i = 0; i < count; i++) {
     BLEAdvertisedDevice d = foundDevices.getDevice(i);
     if (!d.haveManufacturerData()) {
@@ -77,15 +78,18 @@ void loop() {
     uint8_t str_len = data.at(7);
 
     std::string user_name;
+
     for (int i = 0; i < str_len; i++) {
       user_name += data.at(i + 8);
     }
 
-    if (child_state.at(user_name) == seq) {
-      continue;
+    if (child_state.count(user_name) > 0) {
+      if (child_state.at(user_name) == seq) {
+        continue;
+      }
     }
 
-    child_state.at(user_name) = seq;
+    child_state.insert({user_name, seq});
 
     struct tm* now = localtime(&time);
     M5.Lcd.fillScreen(BLACK);
@@ -99,6 +103,7 @@ void loop() {
     insert_db(user_name, time, seq);
     rotate_servo();
   }
+
   if (M5.BtnB.wasPressed()) {
     show_logs();
   }
