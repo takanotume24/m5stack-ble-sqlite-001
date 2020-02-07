@@ -1,15 +1,14 @@
 
 #include <M5Stack.h>
-#include <unordered_map> 
+#include <unordered_map>
 #include "../lib/M5Servo.h"
 #include "BLEDevice.h"
 #include "sqlite.h"
-uint8_t seq;                     // remember number of boots in RTC Memory
-#define MyManufacturerId 0xffff  // test manufacturer ID
 
-#define S_PERIOD 1               // Silent period
-#define PIN_SERVO 5
-#define PIN_ROTATE_SENSOR 35
+uint8_t seq;  // remember number of boots in RTC Memory
+const uint32_t MyManufacturerId = 0xffff;
+const gpio_num_t PIN_SERVO = gpio_num_t::GPIO_NUM_5;
+const gpio_num_t PIN_ROTATE_SENSOR = gpio_num_t::GPIO_NUM_35;
 
 static BLEUUID service_uuid("0xff");
 static BLEUUID char_uuid("0xff");
@@ -69,12 +68,12 @@ void loop() {
     std::string data = d.getManufacturerData();
     int manu = data.at(1) << 8 | data.at(0);
 
-    if (manu != MyManufacturerId ) {  // カンパニーIDが0xFFFFで、
+    if (manu != MyManufacturerId) {  // カンパニーIDが0xFFFFで、
       continue;
     }  // シーケンス番号が新しいものを探す
     seq = data.at(2);
-    time_t time =
-        (time_t)(data.at(6) << 24 | data.at(5) << 16 | data.at(4) << 8 | data.at(3));
+    time_t time = (time_t)(data.at(6) << 24 | data.at(5) << 16 |
+                           data.at(4) << 8 | data.at(3));
     uint8_t str_len = data.at(7);
 
     std::string user_name;
@@ -82,7 +81,9 @@ void loop() {
       user_name += data.at(i + 8);
     }
 
-    if(child_state.at(user_name) == seq){ continue;}
+    if (child_state.at(user_name) == seq) {
+      continue;
+    }
 
     child_state.at(user_name) = seq;
 
@@ -101,7 +102,7 @@ void loop() {
   if (M5.BtnB.wasPressed()) {
     show_logs();
   }
-  if (M5.BtnC.wasPressed()){
+  if (M5.BtnC.wasPressed()) {
     drop_table();
     create_table();
   }
