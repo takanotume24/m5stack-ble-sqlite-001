@@ -12,17 +12,21 @@ class M5Servo {
   // サーボ信号の１サイクル　50Hz:20ms
   constexpr static const int LEDC_SERVO_FREQ = 50;
   constexpr static const int LEDC_TIMER_BIT = 16;
-  int pin_;
+  gpio_num_t pin_;
   int angle_;
 
  public:
   // M5Servo();
 
-  void attach(int pin) {
+  void attach(gpio_num_t pin) {
     pin_ = pin;
     ledcSetup(LEDC_CHANNEL, LEDC_SERVO_FREQ,
               LEDC_TIMER_BIT);  // 16ビット精度で制御
     ledcAttachPin(pin_, LEDC_CHANNEL);
+  }
+
+  void detach(){
+    ledcDetachPin(pin_);
   }
 
   int count(int v) {

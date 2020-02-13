@@ -118,8 +118,7 @@ int drop_table() {
   sqlite3 *db_sd;
   open_db(FILE_NAME_DB, &db_sd);
   char *msg_err = NULL;
-  char *querry =
-      "DROP TABLE LOGS;";
+  char *querry = "DROP TABLE LOGS;";
   int err = sqlite3_exec(db_sd, querry, NULL, NULL, &msg_err);
   if (err != SQLITE_OK) {
     M5.Lcd.printf("f%s >_<\n", msg_err);
@@ -130,6 +129,7 @@ int drop_table() {
   sqlite3_close(db_sd);
   return err;
 }
+
 void show_logs() {
   M5.Lcd.fillScreen(TFT_BLACK);
   M5.Lcd.setCursor(0, 0);

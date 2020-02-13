@@ -89,7 +89,7 @@ void loop() {
       }
     }
 
-    child_state.insert({user_name, seq});
+    child_state[user_name] = seq;
 
     struct tm* now = localtime(&time);
     M5.Lcd.fillScreen(BLACK);
@@ -115,34 +115,38 @@ void loop() {
 
 void IRAM_ATTR _show_logs() { show_logs(); }
 
+enum KeyState get_keystate() {
+  uint16_t rotate_sensor = analogRead(PIN_ROTATE_SENSOR);
+
+  if (rotate_sensor > 1024 / 2) {
+    return OPEN;
+  } else {
+    return CLOSE;
+  }
+}
+
 void rotate_servo() {
   M5Servo servo;
   servo.attach(PIN_SERVO);
 
-  static enum KeyState key_state;
-  uint16_t rotate_sensor = analogRead(PIN_ROTATE_SENSOR);
+  enum KeyState key_state = get_keystate();
 
   M5.Lcd.setCursor(0, 200);
-
-  if (rotate_sensor > 1024 / 2) {
-    key_state = OPEN;
-    M5.Lcd.printf("OPEN -> ");
-  } else {
-    key_state = CLOSE;
-    M5.Lcd.printf("CLOSE -> ");
-  }
 
   switch (key_state) {
     case OPEN:
       servo.write(0);
       key_state = CLOSE;
-      M5.Lcd.printf("CLOSE");
+      M5.Lcd.printf("OPEN -> CLOSE");
       break;
+
     case CLOSE:
       servo.write(90);
       key_state = OPEN;
-      M5.Lcd.printf("OPEN");
-
+      M5.Lcd.printf("CLOSE -> OPEN");
       break;
   }
+
+  delay(1500);
+  servo.detach();
 }
