@@ -5,10 +5,14 @@
 #include "BLEDevice.h"
 #include "sqlite.h"
 
+enum KeyState { KEY_OPEN, KEY_CLOSE };
+enum DoorState { DOOR_OPEN, DOOR_CLOSE };
+
 uint8_t seq;  // remember number of boots in RTC Memory
 const uint32_t MyManufacturerId = 0xffff;
 const gpio_num_t PIN_SERVO = gpio_num_t::GPIO_NUM_5;
 const gpio_num_t PIN_ROTATE_SENSOR = gpio_num_t::GPIO_NUM_35;
+const gpio_num_t PIN_DOOR_SENSOR = gpio_num_t::GPIO_NUM_2;
 
 static BLEUUID service_uuid("0xff");
 static BLEUUID char_uuid("0xff");
@@ -20,10 +24,12 @@ std::unordered_map<std::string, uint8_t> child_state;
 BLEScan* p_ble_scan;
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
-void _show_logs();
-void rotate_servo();
+enum DoorState door_state_now;
+enum DoorState door_state_before;
 
-enum KeyState { OPEN, CLOSE };
+void _show_logs();
+void key_change(enum KeyState);
+enum DoorState get_door_state();
 
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertised_device) {
@@ -60,6 +66,7 @@ void loop() {
   BLEScanResults foundDevices = p_ble_scan->start(1);  // スキャンする
   int count = foundDevices.getCount();
 
+
   for (int i = 0; i < count; i++) {
     BLEAdvertisedDevice d = foundDevices.getDevice(i);
     if (!d.haveManufacturerData()) {
@@ -94,14 +101,21 @@ void loop() {
     struct tm* now = localtime(&time);
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0, 0);
-    M5.Lcd.printf("len: %d,name: %s\r\n", str_len, user_name.c_str());
+    M5.Lcd.printf("len: %d,\tname: %s\r\n", str_len, user_name.c_str());
     M5.Lcd.printf("seq: %d\r\n", seq);
     M5.Lcd.printf("time_t : %ld\n", time);
     M5.Lcd.printf("tm: %d/%d/%d %d:%d:%d'\r\n", now->tm_year + 1900,
                   now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min,
                   now->tm_sec);
     insert_db(user_name, time, seq);
-    rotate_servo();
+
+    switch(get_door_state()){
+      case DoorState::DOOR_CLOSE:
+        key_change(KeyState::KEY_OPEN);
+        break;
+      case DoorState::DOOR_OPEN:
+        break;
+    }
   }
 
   if (M5.BtnB.wasPressed()) {
@@ -111,42 +125,51 @@ void loop() {
     drop_table();
     create_table();
   }
+  M5.Lcd.setCursor(0, 100);
+
+  door_state_now = get_door_state();
+
+  if (door_state_now != door_state_before) {
+    switch (door_state_now) {
+      case DoorState::DOOR_OPEN:
+        break;
+
+      case DoorState::DOOR_CLOSE:
+        key_change(KeyState::KEY_CLOSE);
+        break;
+    }
+  }
+
+  door_state_before = door_state_now;
 }
 
-void IRAM_ATTR _show_logs() { show_logs(); }
-
-enum KeyState get_keystate() {
-  uint16_t rotate_sensor = analogRead(PIN_ROTATE_SENSOR);
-
-  if (rotate_sensor > 1024 / 2) {
-    return OPEN;
+enum DoorState get_door_state(){
+    if (!digitalRead(PIN_DOOR_SENSOR)) {
+    M5.Lcd.printf("door : OPEN \n");
+    return DoorState::DOOR_OPEN;
   } else {
-    return CLOSE;
+    M5.Lcd.printf("door : CLOSE\n");
+    return  DoorState::DOOR_CLOSE;
   }
 }
 
-void rotate_servo() {
+void key_change(enum KeyState state) {
   M5Servo servo;
   servo.attach(PIN_SERVO);
 
-  enum KeyState key_state = get_keystate();
+  delay(1000);
 
-  M5.Lcd.setCursor(0, 200);
-
-  switch (key_state) {
-    case OPEN:
+  switch (state) {
+    case KeyState::KEY_OPEN:
+      M5.Lcd.printf("OPENED\n");
       servo.write(0);
-      key_state = CLOSE;
-      M5.Lcd.printf("OPEN -> CLOSE");
       break;
 
-    case CLOSE:
+    case KeyState::KEY_CLOSE:
+      M5.Lcd.printf("CLOSED\n");
       servo.write(90);
-      key_state = OPEN;
-      M5.Lcd.printf("CLOSE -> OPEN");
       break;
   }
-
-  delay(1500);
+  delay(1000);
   servo.detach();
 }

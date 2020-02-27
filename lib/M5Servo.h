@@ -19,6 +19,7 @@ class M5Servo {
   // M5Servo();
 
   void attach(gpio_num_t pin) {
+    pinMode(pin, OUTPUT);
     pin_ = pin;
     ledcSetup(LEDC_CHANNEL, LEDC_SERVO_FREQ,
               LEDC_TIMER_BIT);  // 16ビット精度で制御
@@ -26,7 +27,7 @@ class M5Servo {
   }
 
   void detach(){
-    ledcDetachPin(pin_);
+    ledcWrite(LEDC_CHANNEL, 255);
   }
 
   int count(int v) {
