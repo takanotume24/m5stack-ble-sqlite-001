@@ -40,7 +40,7 @@ int open_db(const char *filename, sqlite3 **db) {
     M5.Lcd.printf("Can't open database: %s (>_<)\n", sqlite3_errmsg(*db));
     return rc;
   } else {
-    M5.Lcd.printf("Opened database successfully (^_^)\n");
+    // M5.Lcd.printf("Opened database successfully (^_^)\n");
   }
   return rc;
 }
@@ -54,7 +54,7 @@ int db_exec(sqlite3 *db, const char *sql) {
     M5.Lcd.printf("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    M5.Lcd.printf("Operation done successfully (^_^)\n");
+    // M5.Lcd.printf("Operation done successfully (^_^)\n");
     M5.Lcd.printf(zErrMsg);
   }
   M5.Lcd.print(F("Time taken:"));
@@ -78,7 +78,7 @@ int create_table() {
 
     return err;
   }
-  M5.Lcd.printf("create table success (^_^)\n");
+  // M5.Lcd.printf("create table success (^_^)\n");
   sqlite3_close(db_sd);
   return err;
 }
@@ -108,7 +108,7 @@ int insert_db(std::string user_name, time_t time, int seq) {
   while (SQLITE_DONE != sqlite3_step(statement)) {
   }
   sqlite3_finalize(statement);
-  M5.Lcd.printf("insert done!");
+  // M5.Lcd.printf("insert done!");
   sqlite3_close(db_sd);
 
   return error;

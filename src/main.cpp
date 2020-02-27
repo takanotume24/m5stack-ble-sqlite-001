@@ -62,7 +62,6 @@ void setup() {
 }
 void loop() {
   M5.update();
-
   BLEScanResults foundDevices = p_ble_scan->start(1);  // スキャンする
   int count = foundDevices.getCount();
 
@@ -101,21 +100,20 @@ void loop() {
     struct tm* now = localtime(&time);
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0, 0);
-    M5.Lcd.printf("len: %d,\tname: %s\r\n", str_len, user_name.c_str());
-    M5.Lcd.printf("seq: %d\r\n", seq);
-    M5.Lcd.printf("time_t : %ld\n", time);
-    M5.Lcd.printf("tm: %d/%d/%d %d:%d:%d'\r\n", now->tm_year + 1900,
+    M5.Lcd.setTextSize(5);
+    M5.Lcd.printf("Hello,\n%s\n",user_name.c_str());
+    M5.Lcd.printf(
+      "\n"
+      "%d/%d/%d \n"
+      "%d:%d:%d'\r\n",
+     now->tm_year + 1900,
                   now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min,
                   now->tm_sec);
-    insert_db(user_name, time, seq);
+    M5.Lcd.setTextSize(2);
 
-    switch(get_door_state()){
-      case DoorState::DOOR_CLOSE:
-        key_change(KeyState::KEY_OPEN);
-        break;
-      case DoorState::DOOR_OPEN:
-        break;
-    }
+    insert_db(user_name, time, seq);
+    key_change(KeyState::KEY_OPEN);
+
   }
 
   if (M5.BtnB.wasPressed()) {
@@ -145,10 +143,8 @@ void loop() {
 
 enum DoorState get_door_state(){
     if (!digitalRead(PIN_DOOR_SENSOR)) {
-    M5.Lcd.printf("door : OPEN \n");
     return DoorState::DOOR_OPEN;
   } else {
-    M5.Lcd.printf("door : CLOSE\n");
     return  DoorState::DOOR_CLOSE;
   }
 }
@@ -161,12 +157,10 @@ void key_change(enum KeyState state) {
 
   switch (state) {
     case KeyState::KEY_OPEN:
-      M5.Lcd.printf("OPENED\n");
       servo.write(0);
       break;
 
     case KeyState::KEY_CLOSE:
-      M5.Lcd.printf("CLOSED\n");
       servo.write(90);
       break;
   }
